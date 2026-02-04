@@ -1,0 +1,145 @@
+@model IEnumerable<HocPhanViewModel>
+@{
+    ViewData["Title"] = "Quản lý học phần";
+}
+
+@Html.AntiForgeryToken()
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-collection me-2"></i>Danh sách học phần</span>
+        <div>
+            <button type="button" id="btnTaoTuHopDong" class="btn btn-success btn-sm me-2">
+                <i class="bi bi-lightning me-1"></i>Tạo từ hợp đồng
+            </button>
+            <a href="/QuanLyHocPhan/Tao" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Thêm học phần
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Mã học phần</th>
+                        <th>Môn học</th>
+                        <th>Giảng viên</th>
+                        <th>Loại GV</th>
+                        <th>Học kỳ</th>
+                        <th>Sĩ số</th>
+                        <th>Trạng thái</th>
+                        <th width="100">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td><code>@item.MaHocPhan</code></td>
+                            <td>@item.TenMonHoc</td>
+                            <td>@item.TenGiangVien</td>
+                            <td>
+                                <span class="badge @(item.LoaiGiangVien == "ThinhGiang" ? "bg-warning text-dark" : "bg-info")">
+                                    @(item.LoaiGiangVien == "ThinhGiang" ? "Thỉnh giảng" : "Cố hữu")
+                                </span>
+                            </td>
+                            <td>@item.TenHocKy</td>
+                            <td><span class="badge bg-secondary">@item.SiSo SV</span></td>
+                            <td>
+                                @if (item.DaXepLich)
+                                {
+                                    <span class="badge bg-success">Đã xếp lịch</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-warning text-dark">Chưa xếp</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/QuanLyHocPhan/Sua/@item.Id" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-outline-danger" title="Xóa"
+                                            onclick="confirmDelete(@item.Id, '@item.MaHocPhan')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal xác nhận xóa -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận xóa</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa học phần <strong id="deleteName"></strong>?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <form id="deleteForm" method="post" style="display:inline">
+                    <button type="submit" class="btn btn-danger">Xóa</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function confirmDelete(id, name) {
+            document.getElementById('deleteName').textContent = name;
+            document.getElementById('deleteForm').action = '/QuanLyHocPhan/Xoa/' + id;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        document.getElementById('btnTaoTuHopDong').addEventListener('click', function() {
+            if (!confirm('Bạn có muốn tạo học phần từ các hợp đồng đã duyệt?')) {
+                return;
+            }
+            
+            var btn = this;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
+            
+            Notify.loading('Đang tạo học phần từ hợp đồng...');
+            
+            fetch('/QuanLyHocPhan/TaoTuHopDong', {
+                method: 'POST',
+                headers: {
+                    'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                Notify.closeLoading();
+                if (data.success) {
+                    Notify.success(data.message, 'Tạo học phần thành công!', function() {
+                        location.reload();
+                    });
+                } else {
+                    Notify.error(data.message, 'Lỗi tạo học phần!');
+                    btn.disabled = false;
+                    btn.innerHTML = '<i class="bi bi-lightning me-1"></i>Tạo từ hợp đồng';
+                }
+            })
+            .catch(error => {
+                Notify.closeLoading();
+                Notify.error('Lỗi kết nối: ' + error, 'Lỗi!');
+                btn.disabled = false;
+                btn.innerHTML = '<i class="bi bi-lightning me-1"></i>Tạo từ hợp đồng';
+            });
+        });
+    </script>
+}

@@ -1,0 +1,570 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Trang chủ";
+}
+
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h4 class="mb-1">Xin chào, @Model.TenNguoiDung!</h4>
+                        <p class="text-muted mb-0">
+                            @switch (Model.VaiTro)
+                            {
+                                case "Admin":
+                                    <span class="badge bg-danger">Quản trị viên</span>
+                                    break;
+                                case "PhongDaoTao":
+                                    <span class="badge bg-primary">Phòng Đào tạo</span>
+                                    break;
+                                case "TrungTamDaoTaoThucHanh":
+                                    <span class="badge bg-success">Trung tâm ĐTTH</span>
+                                    break;
+                                case "GiangVien":
+                                    <span class="badge bg-info">Giảng viên</span>
+                                    if (!string.IsNullOrEmpty(Model.LoaiGiangVien))
+                                    {
+                                        <span class="badge bg-secondary ms-1">@(Model.LoaiGiangVien == "ThinhGiang" ? "Thỉnh giảng" : "Cố hữu")</span>
+                                    }
+                                    break;
+                            }
+                        </p>
+                    </div>
+                    @if (!string.IsNullOrEmpty(Model.TenHocKy))
+                    {
+                        <div class="text-end">
+                            <div class="mb-1">
+                                <strong>@Model.TenHocKy</strong>
+                            </div>
+                            <span class="phase-badge @GetPhaseBadgeClass(Model.GiaiDoanHienTai)">
+                                <i class="bi bi-calendar-event me-1"></i>@Model.GiaiDoanHienTai
+                            </span>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Thống kê với Animation -->
+@if (Model.ThongKe != null && Model.ThongKe.Any())
+{
+    <div class="row mb-4">
+        @{
+            int index = 0;
+        }
+        @foreach (var stat in Model.ThongKe)
+        {
+            var delay = index * 0.1;
+            <div class="col-md-6 col-lg-3 mb-3">
+                <div class="card h-100 stat-card border-0 shadow-sm" style="animation: slideInUp 0.5s ease-out @(delay)s both;">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="flex-grow-1">
+                                <p class="text-muted mb-1 small text-uppercase">@stat.Key</p>
+                                <h2 class="mb-0 fw-bold stat-number" data-target="@stat.Value">0</h2>
+                            </div>
+                            <div class="stat-icon-wrapper">
+                                @Html.Raw(GetStatIcon(stat.Key))
+                            </div>
+                        </div>
+                        <div class="progress mt-3" style="height: 4px;">
+                            <div class="progress-bar @GetProgressColor(stat.Key)" role="progressbar" style="width: @GetProgressWidth(stat.Value)%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            index++;
+        }
+    </div>
+}
+
+<!-- Quick Actions cho Admin -->
+@if (Model.VaiTro == "Admin")
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-gradient-primary text-white">
+                    <i class="bi bi-lightning-charge-fill me-2"></i>Thao tác nhanh
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <a href="/Account/Register" class="btn btn-outline-primary w-100 btn-action">
+                                <i class="bi bi-person-plus-fill d-block mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Tạo tài khoản</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/HocKy/Create" class="btn btn-outline-success w-100 btn-action">
+                                <i class="bi bi-calendar-plus-fill d-block mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Tạo học kỳ mới</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/MonHoc/Create" class="btn btn-outline-info w-100 btn-action">
+                                <i class="bi bi-book-fill d-block mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Thêm môn học</span>
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="/PhongMay/Create" class="btn btn-outline-warning w-100 btn-action">
+                                <i class="bi bi-pc-display-horizontal d-block mb-2" style="font-size: 1.5rem;"></i>
+                                <span>Thêm phòng máy</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Công việc cần làm / Chức năng quản lý -->
+@if (Model.DanhSachCongViec != null && Model.DanhSachCongViec.Any())
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <h5 class="mb-3">
+                <i class="bi @(Model.VaiTro == "Admin" ? "bi-shield-check" : "bi-list-check") me-2"></i>
+                @(Model.VaiTro == "Admin" ? "Chức năng quản lý" : "Công việc cần thực hiện")
+            </h5>
+        </div>
+        @foreach (var item in Model.DanhSachCongViec)
+        {
+            <div class="col-md-6 col-lg-4 col-xl-3 mb-3">
+                <a href="@item.Link" class="text-decoration-none">
+                    <div class="card h-100 hover-shadow border-@item.MauSac">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <i class="@item.Icon text-@item.MauSac" style="font-size: 3rem;"></i>
+                            </div>
+                            <h6 class="card-title text-dark mb-2">@item.TieuDe</h6>
+                            <p class="card-text text-muted small mb-0">@item.MoTa</p>
+                        </div>
+                        @if (item.SoLuong > 0)
+                        {
+                            <div class="card-footer bg-@item.MauSac bg-opacity-10 border-top-0">
+                                <small class="text-@item.MauSac fw-bold">
+                                    <i class="bi bi-bell-fill me-1"></i>@item.SoLuong việc chờ xử lý
+                                </small>
+                            </div>
+                        }
+                    </div>
+                </a>
+            </div>
+        }
+    </div>
+}
+
+<style>
+    .hover-shadow {
+        transition: all 0.3s ease;
+        border-width: 2px !important;
+    }
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+    }
+
+    /* Dashboard Animations */
+    @@keyframes slideInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @@keyframes countUp {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    /* Stat Cards */
+    .stat-card {
+        transition: all 0.3s ease;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+    }
+
+    .stat-icon-wrapper {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .stat-icon-wrapper i {
+        font-size: 28px !important;
+        color: white !important;
+    }
+
+    .stat-number {
+        color: #2d3748;
+        animation: countUp 1s ease-out;
+    }
+
+    /* Quick Actions */
+    .btn-action {
+        padding: 1.2rem 1rem;
+        height: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        border-width: 2px;
+    }
+    .btn-action:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    }
+
+    .bg-gradient-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+
+    /* Timeline */
+    .timeline {
+        position: relative;
+        padding: 0;
+    }
+    .timeline:before {
+        content: '';
+        position: absolute;
+        left: 20px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e2e8f0;
+    }
+    .timeline-item {
+        position: relative;
+        padding-left: 50px;
+        margin-bottom: 1.5rem;
+    }
+    .timeline-badge {
+        position: absolute;
+        left: 10px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        z-index: 1;
+        border: 3px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .timeline-content {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+    }
+
+    /* Notifications */
+    .notification-list .list-group-item {
+        border-left: 3px solid transparent;
+        transition: all 0.2s ease;
+    }
+    .notification-list .list-group-item:hover {
+        border-left-color: #667eea;
+        background-color: #f8f9fa !important;
+    }
+    .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    .bg-light-blue {
+        background-color: #ebf4ff !important;
+    }
+
+    /* Progress bars */
+    .progress {
+        background-color: #e2e8f0;
+    }
+    .progress-bar {
+        transition: width 1.5s ease-in-out;
+    }
+</style>
+
+<!-- Công việc cần làm cũ (cho các role khác) -->
+@if (Model.CongViecCanLam != null && Model.CongViecCanLam.Any())
+{
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span><i class="bi bi-list-check me-2"></i>Công việc cần thực hiện</span>
+                    <span class="badge bg-primary">@Model.CongViecCanLam.Count việc</span>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var task in Model.CongViecCanLam)
+                        {
+                            <a href="@task.Url" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center">
+                                <div>
+                                    <i class="bi bi-arrow-right-circle me-2 text-primary"></i>
+                                    @task.TieuDe
+                                    @if (!string.IsNullOrEmpty(task.MoTa))
+                                    {
+                                        <small class="d-block text-muted">@task.MoTa</small>
+                                    }
+                                </div>
+                                @if (task.SoLuong > 0)
+                                {
+                                    <span class="badge bg-warning">@task.SoLuong</span>
+                                }
+                            </a>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Thông báo gần đây -->
+@if (Model.ThongBaoGanDay != null && Model.ThongBaoGanDay.Any())
+{
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="bi bi-bell-fill me-2 text-primary"></i>Thông báo gần đây</h5>
+                        <span class="badge bg-primary">@Model.ThongBaoGanDay.Count(x => !x.DaDoc) mới</span>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush notification-list">
+                        @foreach (var tb in Model.ThongBaoGanDay)
+                        {
+                            <div class="list-group-item @(tb.DaDoc ? "" : "bg-light-blue")">
+                                <div class="d-flex align-items-start">
+                                    <div class="notification-icon @(tb.DaDoc ? "bg-secondary" : "bg-primary")">
+                                        <i class="bi bi-bell-fill text-white"></i>
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="d-flex justify-content-between align-items-start">
+                                            <div>
+                                                <h6 class="mb-1">
+                                                    @if (!tb.DaDoc)
+                                                    {
+                                                        <span class="badge bg-danger me-2">MỚI</span>
+                                                    }
+                                                    @tb.TieuDe
+                                                </h6>
+                                                <p class="mb-1 text-muted small">@tb.NoiDung</p>
+                                            </div>
+                                            <small class="text-muted text-nowrap ms-3">
+                                                <i class="bi bi-clock me-1"></i>@tb.ThoiGian.ToString("dd/MM HH:mm")
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Timeline cho Admin -->
+        @if (Model.VaiTro == "Admin")
+        {
+            <div class="col-lg-4 mb-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white border-bottom">
+                        <h5 class="mb-0"><i class="bi bi-activity me-2 text-success"></i>Hoạt động hệ thống</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-success">
+                                    <i class="bi bi-check-circle-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-0">Học kỳ mới</h6>
+                                    <small class="text-muted">@(Model.TenHocKy ?? "Chưa có")</small>
+                                    <p class="small text-muted mb-0">Đang hoạt động</p>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-info">
+                                    <i class="bi bi-people-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-0">Giảng viên</h6>
+                                    <small class="text-muted">@(Model.ThongKe?.GetValueOrDefault("Giảng viên cố hữu", 0)) cố hữu, @(Model.ThongKe?.GetValueOrDefault("Giảng viên thỉnh giảng", 0)) thỉnh giảng</small>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-warning">
+                                    <i class="bi bi-pc-display"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-0">Phòng máy</h6>
+                                    <small class="text-muted">@(Model.ThongKe?.GetValueOrDefault("Tổng phòng máy", 0)) phòng sẵn sàng</small>
+                                </div>
+                            </div>
+                            <div class="timeline-item">
+                                <div class="timeline-badge bg-primary">
+                                    <i class="bi bi-book-fill"></i>
+                                </div>
+                                <div class="timeline-content">
+                                    <h6 class="mb-0">Môn học</h6>
+                                    <small class="text-muted">@(Model.ThongKe?.GetValueOrDefault("Tổng môn học", 0)) môn đang hoạt động</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else if (Model.ThongBaoGanDay != null && Model.ThongBaoGanDay.Any())
+{
+    <div class="row">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-white border-bottom">
+                    <i class="bi bi-bell-fill me-2 text-primary"></i>Thông báo gần đây
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        @foreach (var tb in Model.ThongBaoGanDay)
+                        {
+                            <div class="list-group-item @(tb.DaDoc ? "" : "list-group-item-light")">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">
+                                            @if (!tb.DaDoc)
+                                            {
+                                                <span class="badge bg-danger me-1">Mới</span>
+                                            }
+                                            @tb.TieuDe
+                                        </h6>
+                                        <p class="mb-1 text-muted">@tb.NoiDung</p>
+                                    </div>
+                                    <small class="text-muted">@tb.ThoiGian.ToString("dd/MM HH:mm")</small>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@functions {
+    string GetPhaseBadgeClass(string phase)
+    {
+        return phase switch
+        {
+            "Tuần 1: Nhập hợp đồng" => "bg-primary text-white",
+            "Tuần 2: Đăng ký lịch" => "bg-info text-white",
+            "Tuần 3: Sắp xếp lịch" => "bg-warning text-dark",
+            "Tuần 4: Hoàn tất chuẩn bị" => "bg-success text-white",
+            "Học kỳ đang diễn ra" => "bg-success text-white",
+            "Giai đoạn thi" => "bg-secondary text-white",
+            _ => "bg-light text-dark"
+        };
+    }
+    
+    string GetStatIcon(string key)
+    {
+        return key.ToLower() switch
+        {
+            var k when k.Contains("tài khoản") => "<i class='bi bi-people-fill'></i>",
+            var k when k.Contains("học phần") => "<i class='bi bi-collection'></i>",
+            var k when k.Contains("hợp đồng") => "<i class='bi bi-file-earmark-text'></i>",
+            var k when k.Contains("phòng") => "<i class='bi bi-building'></i>",
+            var k when k.Contains("lịch") => "<i class='bi bi-calendar-check'></i>",
+            var k when k.Contains("yêu cầu") => "<i class='bi bi-inbox'></i>",
+            var k when k.Contains("môn học") => "<i class='bi bi-book'></i>",
+            var k when k.Contains("giảng viên") => "<i class='bi bi-person-badge'></i>",
+            var k when k.Contains("học kỳ") => "<i class='bi bi-calendar3'></i>",
+            _ => "<i class='bi bi-bar-chart'></i>"
+        };
+    }
+
+    string GetProgressColor(string key)
+    {
+        return key.ToLower() switch
+        {
+            var k when k.Contains("tài khoản") => "bg-info",
+            var k when k.Contains("giảng viên") => "bg-success",
+            var k when k.Contains("môn học") => "bg-primary",
+            var k when k.Contains("phòng") => "bg-warning",
+            var k when k.Contains("học kỳ") => "bg-danger",
+            _ => "bg-secondary"
+        };
+    }
+
+    int GetProgressWidth(int value)
+    {
+        // Tính % dựa trên giá trị (scale 0-100, max tham chiếu là 200)
+        return Math.Min((int)((value / 200.0) * 100), 100);
+    }
+}
+
+<script>
+    // Counter animation for statistics
+    document.addEventListener('DOMContentLoaded', function() {
+        const counters = document.querySelectorAll('.stat-number');
+        
+        counters.forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            const duration = 2000; // 2 seconds
+            const increment = target / (duration / 16); // 60 FPS
+            let current = 0;
+            
+            const updateCounter = () => {
+                current += increment;
+                if (current < target) {
+                    counter.textContent = Math.floor(current);
+                    requestAnimationFrame(updateCounter);
+                } else {
+                    counter.textContent = target;
+                }
+            };
+            
+            // Start animation when element is in viewport
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        updateCounter();
+                        observer.unobserve(entry.target);
+                    }
+                });
+            });
+            
+            observer.observe(counter);
+        });
+    });
+</script>

@@ -1,0 +1,261 @@
+@model QL_TH_MT.ViewModels.FormDangKyLichViewModel
+@{
+    ViewData["Title"] = "Đăng ký lịch giảng dạy";
+}
+
+<div class="container-fluid py-4">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-calendar-check me-2" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <h5 class="mb-0">Đăng ký lịch giảng dạy</h5>
+                            <small>Học kỳ: @Model.TenHocKy</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Thông tin cơ bản -->
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <div class="info-box p-3 bg-light rounded">
+                                <strong class="d-block text-muted mb-1">
+                                    <i class="bi bi-book me-2"></i>Môn học:
+                                </strong>
+                                <h6 class="mb-0">@Model.TenMonHoc</h6>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-box p-3 bg-light rounded">
+                                <strong class="d-block text-muted mb-1">
+                                    <i class="bi bi-stack me-2"></i>Số học phần:
+                                </strong>
+                                <h6 class="mb-0">@Model.SoHocPhan học phần (@(Model.SoHocPhan * 3) buổi thực hành)</h6>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alert -->
+                    <div class="alert alert-info mb-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Hướng dẫn:</strong> Mỗi học phần cần đăng ký <strong>3 buổi thực hành liên tiếp</strong> (cùng thứ, cùng ca học, 3 tuần liên tiếp).
+                    </div>
+
+                    <!-- Form đăng ký -->
+                    <form method="post" class="needs-validation" novalidate>
+                        @if (Model.DanhSachCa != null && Model.DanhSachCa.Any())
+                        {
+                            <div class="accordion mb-4" id="accordionLichDangKy">
+                                @for (int i = 0; i < Model.DanhSachCa.Count; i++)
+                                {
+                                    var ca = Model.DanhSachCa[i];
+                                    var stt = i + 1;
+                                    <div class="accordion-item">
+                                        <h2 class="accordion-header">
+                                            <button class="accordion-button @(i > 0 ? "collapsed" : "")" type="button" data-bs-toggle="collapse" data-bs-target="#collapse@i" aria-expanded="@(i == 0 ? "true" : "false")" aria-controls="collapse@i">
+                                                <i class="bi bi-book me-2"></i>
+                                                <span class="me-2"><strong>Học phần @stt</strong></span>
+                                                <span id="status@i" class="badge bg-secondary">Chưa điền</span>
+                                            </button>
+                                        </h2>
+                                        <div id="collapse@i" class="accordion-collapse collapse @(i == 0 ? "show" : "")" data-bs-parent="#accordionLichDangKy">
+                                            <div class="accordion-body">
+                                                <div class="row g-3">
+                                                    <!-- Thứ trong tuần -->
+                                                    <div class="col-md-6">
+                                                        <label for="danhSachCa_@(i)__ThuTrongTuan" class="form-label">
+                                                            <i class="bi bi-calendar me-1"></i>Thứ trong tuần <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select name="DanhSachCa[@(i)].ThuTrongTuan" id="danhSachCa_@(i)__ThuTrongTuan" class="form-select form-select-sm" required onchange="updateStatus(@(i))">
+                                                            <option value="0">-- Chọn thứ --</option>
+                                                            <option value="2" selected="@(ca.ThuTrongTuan == 2)">Thứ 2</option>
+                                                            <option value="3" selected="@(ca.ThuTrongTuan == 3)">Thứ 3</option>
+                                                            <option value="4" selected="@(ca.ThuTrongTuan == 4)">Thứ 4</option>
+                                                            <option value="5" selected="@(ca.ThuTrongTuan == 5)">Thứ 5</option>
+                                                            <option value="6" selected="@(ca.ThuTrongTuan == 6)">Thứ 6</option>
+                                                            <option value="7" selected="@(ca.ThuTrongTuan == 7)">Thứ 7</option>
+                                                            <option value="8" selected="@(ca.ThuTrongTuan == 8)">Chủ nhật</option>
+                                                        </select>
+                                                        <div class="invalid-feedback d-block">
+                                                            Vui lòng chọn thứ trong tuần
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Ca học -->
+                                                    <div class="col-md-6">
+                                                        <label for="danhSachCa_@(i)__CaHoc" class="form-label">
+                                                            <i class="bi bi-clock me-1"></i>Ca học <span class="text-danger">*</span>
+                                                        </label>
+                                                        <select name="DanhSachCa[@(i)].CaHoc" id="danhSachCa_@(i)__CaHoc" class="form-select form-select-sm" required onchange="updateStatus(@(i))">
+                                                            <option value="0">-- Chọn ca --</option>
+                                                            <option value="1" selected="@(ca.CaHoc == 1)">Ca 1 (7:00 - 8:40)</option>
+                                                            <option value="2" selected="@(ca.CaHoc == 2)">Ca 2 (8:50 - 10:30)</option>
+                                                            <option value="3" selected="@(ca.CaHoc == 3)">Ca 3 (10:40 - 12:20)</option>
+                                                            <option value="4" selected="@(ca.CaHoc == 4)">Ca 4 (13:30 - 15:10)</option>
+                                                            <option value="5" selected="@(ca.CaHoc == 5)">Ca 5 (15:20 - 17:00)</option>
+                                                            <option value="6" selected="@(ca.CaHoc == 6)">Ca 6 (17:10 - 18:50)</option>
+                                                        </select>
+                                                        <div class="invalid-feedback d-block">
+                                                            Vui lòng chọn ca học
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Tuần bắt đầu -->
+                                                    <div class="col-md-6">
+                                                        <label for="danhSachCa_@(i)__TuanBatDau" class="form-label">
+                                                            <i class="bi bi-calendar-day me-1"></i>Tuần bắt đầu
+                                                        </label>
+                                                        <input type="number" name="DanhSachCa[@(i)].TuanBatDau" id="danhSachCa_@(i)__TuanBatDau" class="form-control form-control-sm" value="@(ca.TuanBatDau ?? 1)" min="1" max="15" onchange="updateStatus(@(i))" />
+                                                        <small class="text-muted d-block mt-1">
+                                                            <i class="bi bi-info-circle me-1"></i>Để trống hoặc nhập 1 nếu không chắc
+                                                        </small>
+                                                    </div>
+
+                                                    <!-- Ghi chú -->
+                                                    <div class="col-md-6">
+                                                        <label for="danhSachCa_@(i)__GhiChu" class="form-label">
+                                                            <i class="bi bi-pencil-square me-1"></i>Ghi chú
+                                                        </label>
+                                                        <input type="text" name="DanhSachCa[@(i)].GhiChu" id="danhSachCa_@(i)__GhiChu" class="form-control form-control-sm" value="@(ca.GhiChu ?? "")" placeholder="Ghi chú thêm (nếu có)" />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                <strong>Lỗi:</strong> Không tìm thấy thông tin học phần để đăng ký.
+                            </div>
+                        }
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="@Url.Action("Index", "DangKyLich")" class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-1"></i>Lưu đăng ký
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hướng dẫn chi tiết -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">
+                        <i class="bi bi-question-circle me-2"></i>
+                        Hướng dẫn sử dụng
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <h6>Quy tắc đăng ký:</h6>
+                            <ul>
+                                <li>Mỗi học phần phải có <strong>3 buổi thực hành</strong></li>
+                                <li>3 buổi phải <strong>cùng thứ</strong> trong tuần</li>
+                                <li>3 buổi phải <strong>cùng ca học</strong></li>
+                                <li>3 buổi phải <strong>liên tiếp 3 tuần</strong></li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Ví dụ:</h6>
+                            <div class="bg-light p-2 rounded">
+                                <small>
+                                    Thứ 3, Ca 1 (7:00-8:40)<br/>
+                                    Tuần 1, 2, 3 liên tiếp<br/>
+                                    <strong class="text-success">✓ Đúng</strong>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Cập nhật trạng thái badge
+    function updateStatus(index) {
+        const selectThu = document.getElementById(`danhSachCa_${index}__ThuTrongTuan`);
+        const selectCa = document.getElementById(`danhSachCa_${index}__CaHoc`);
+        const statusBadge = document.getElementById(`status${index}`);
+
+        const thuValue = selectThu.value;
+        const caValue = selectCa.value;
+
+        if (thuValue && thuValue !== '0' && caValue && caValue !== '0') {
+            const thuMap = {
+                '2': 'T2', '3': 'T3', '4': 'T4', '5': 'T5', '6': 'T6', '7': 'T7', '8': 'CN'
+            };
+            statusBadge.innerHTML = `✓ ${thuMap[thuValue]}, Ca ${caValue}`;
+            statusBadge.className = 'badge bg-success';
+        } else {
+            statusBadge.innerHTML = 'Chưa điền';
+            statusBadge.className = 'badge bg-secondary';
+        }
+    }
+
+    // Validate form
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('.needs-validation');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                if (!form.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            });
+        }
+
+        // Cập nhật trạng thái ban đầu cho tất cả các học phần
+        const numItems = @Model.DanhSachCa.Count;
+        for (let i = 0; i < numItems; i++) {
+            updateStatus(i);
+        }
+    });
+</script>
+
+<style>
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f3ff;
+        color: #0c63e4;
+    }
+
+    .accordion-button:focus {
+        border-color: #86b7fe;
+        outline: 0;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .info-box {
+        border-left: 4px solid #0c63e4;
+    }
+
+    .form-select-sm {
+        font-size: 0.9rem;
+    }
+
+    .form-control-sm {
+        font-size: 0.9rem;
+    }
+
+    .invalid-feedback {
+        font-size: 0.85rem;
+    }
+</style>

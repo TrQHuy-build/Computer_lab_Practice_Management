@@ -1,0 +1,178 @@
+@{
+    ViewData["Title"] = "Yêu cầu mượn bù";
+    var choPhep = ViewBag.ChoPhep as bool? ?? false;
+}
+
+@if (!choPhep)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Chức năng mượn bù chỉ khả dụng từ Tuần 4 tiền học kỳ và trong thời gian học kỳ diễn ra.
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-calendar-x me-2"></i>Tạo yêu cầu mượn bù
+            </div>
+            <div class="card-body">
+                @if (choPhep)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Lưu ý:</strong> Ngày mượn và ngày bù phải trong phạm vi <strong>1 tuần</strong> (trước hoặc sau).
+                    </div>
+                    
+                    <form asp-action="MuonBu" method="post">
+                        @Html.AntiForgeryToken()
+                        <div class="mb-3">
+                            <label class="form-label">Lịch cần mượn bù <span class="text-danger">*</span></label>
+                            <select name="LichThucHanhGocId" class="form-select" required onchange="updateLichInfo(this)">
+                                <option value="">-- Chọn lịch --</option>
+                                @if (ViewBag.LichCuaToi != null)
+                                {
+                                    foreach (var lich in ViewBag.LichCuaToi as IEnumerable<SelectListItem>)
+                                    {
+                                        <option value="@lich.Value">@lich.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Ngày gốc (hôm nay)</label>
+                            <input type="date" name="NgayGoc" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" readonly />
+                            <small class="text-muted">Tự động điền ngày hôm nay (@DateTime.Today.ToString("dd/MM/yyyy"))</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Ngày mới <span class="text-danger">*</span></label>
+                            <input type="date" name="NgayMoi" class="form-control" required />
+                            <small class="text-muted">Phải trong phạm vi 1 tuần so với ngày gốc</small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Ca học mới (nếu muốn đổi)</label>
+                            <select name="CaHocMoi" class="form-select">
+                                <option value="">-- Giữ nguyên ca --</option>
+                                <option value="1">Ca 1 (7:00-8:30)</option>
+                                <option value="2">Ca 2 (8:40-10:10)</option>
+                                <option value="3">Ca 3 (10:20-11:50)</option>
+                                <option value="4">Ca 4 (12:30-14:00)</option>
+                                <option value="5">Ca 5 (14:10-15:40)</option>
+                                <option value="6">Ca 6 (15:50-17:20)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Lý do <span class="text-danger">*</span></label>
+                            <textarea name="LyDo" class="form-control" rows="3" required 
+                                      placeholder="Nhập lý do cần mượn/bù..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-send me-1"></i>Gửi yêu cầu
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        Chức năng không khả dụng trong giai đoạn này.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-ul me-2"></i>Yêu cầu của tôi
+            </div>
+            <div class="card-body p-0">
+                @if (ViewBag.YeuCauCuaToi != null && ((IEnumerable<QL_TH_MT.Models.YeuCauMuonBuNew>)ViewBag.YeuCauCuaToi).Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var yc in ViewBag.YeuCauCuaToi as IEnumerable<QL_TH_MT.Models.YeuCauMuonBuNew>)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">Ngày gốc: @yc.NgayGoc.ToString("dd/MM/yyyy")</h6>
+                                        <p class="mb-1 small">
+                                            <strong>Ngày mới:</strong> @yc.NgayMoi.ToString("dd/MM/yyyy")
+                                            @if (yc.CaHocMoi.HasValue)
+                                            {
+                                                <text> - Ca @yc.CaHocMoi</text>
+                                            }
+                                            <br/>
+                                            <strong>Lý do:</strong> @yc.LyDo
+                                        </p>
+                                    </div>
+                                    <span class="badge @(yc.TrangThai == 0 ? "bg-warning" : yc.TrangThai == 1 ? "bg-info" : yc.TrangThai == 2 ? "bg-success" : "bg-danger")">
+                                        @(yc.TrangThai == 0 ? "Chờ PDT" : yc.TrangThai == 1 ? "Chờ TTDT" : yc.TrangThai == 2 ? "Đã duyệt" : "Từ chối")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        Chưa có yêu cầu nào
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hiển thị popup thông báo từ TempData
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>
+                Swal.fire({
+                    title: 'Thành công',
+                    text: '@Html.Raw(TempData["Success"].ToString().Replace("'", "\\'"))',
+                    icon: 'success',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#28a745',
+                    didOpen: function(modal) {
+                        modal.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        const titleEl = document.querySelector('.swal2-title');
+                        const textEl = document.querySelector('.swal2-html-container');
+                        if (titleEl) titleEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        if (textEl) textEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                    }
+                });
+            </text>
+        }
+        
+        @if (TempData["Error"] != null)
+        {
+            <text>
+                Swal.fire({
+                    title: 'Lỗi',
+                    text: '@Html.Raw(TempData["Error"].ToString().Replace("'", "\\'"))',
+                    icon: 'error',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#dc3545',
+                    didOpen: function(modal) {
+                        modal.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        const titleEl = document.querySelector('.swal2-title');
+                        const textEl = document.querySelector('.swal2-html-container');
+                        if (titleEl) titleEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        if (textEl) textEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                    }
+                });
+            </text>
+        }
+    });
+</script>
+

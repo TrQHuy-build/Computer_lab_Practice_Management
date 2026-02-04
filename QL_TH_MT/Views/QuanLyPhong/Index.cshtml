@@ -1,0 +1,78 @@
+@model IEnumerable<PhongThucHanhViewModel>
+@{
+    ViewData["Title"] = "Quản lý phòng thực hành";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-building me-2"></i>Danh sách phòng thực hành (Nhà E7)</span>
+        <a href="/QuanLyPhong/Tao" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Thêm phòng
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            @foreach (var phong in Model)
+            {
+                <div class="col-md-4 mb-4">
+                    <div class="card h-100 @(phong.DangHoatDong ? "" : "bg-light")">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <strong>@phong.TenPhong</strong>
+                            @if (phong.DangHoatDong)
+                            {
+                                <span class="badge bg-success">Hoạt động</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Tạm khóa</span>
+                            }
+                        </div>
+                        <div class="card-body">
+                            <p class="mb-2">
+                                <i class="bi bi-geo-alt me-2"></i>Vị trí: @phong.ViTri
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-people me-2"></i>Sức chứa: @phong.SucChua máy
+                            </p>
+                            <p class="mb-2">
+                                <i class="bi bi-pc-display me-2"></i>Máy hoạt động: 
+                                <span class="badge @(phong.SoMayHoatDong >= phong.SucChua * 0.8 ? "bg-success" : "bg-warning")">
+                                    @phong.SoMayHoatDong/@phong.SucChua
+                                </span>
+                            </p>
+                            
+                            @if (phong.PhanMems != null && phong.PhanMems.Any())
+                            {
+                                <hr/>
+                                <p class="mb-2"><strong>Phần mềm đã cài:</strong></p>
+                                <div>
+                                    @foreach (var pm in phong.PhanMems.Take(5))
+                                    {
+                                        <span class="badge bg-info me-1 mb-1">@pm</span>
+                                    }
+                                    @if (phong.PhanMems.Count() > 5)
+                                    {
+                                        <span class="badge bg-secondary">+@(phong.PhanMems.Count() - 5)</span>
+                                    }
+                                </div>
+                            }
+                        </div>
+                        <div class="card-footer">
+                            <div class="btn-group btn-group-sm w-100">
+                                <a href="/QuanLyPhong/ChiTiet/@phong.Id" class="btn btn-outline-info">
+                                    <i class="bi bi-eye"></i> Chi tiết
+                                </a>
+                                <a href="/QuanLyPhong/Sua/@phong.Id" class="btn btn-outline-primary">
+                                    <i class="bi bi-pencil"></i> Sửa
+                                </a>
+                                <a href="/QuanLyPhong/KiemKe/@phong.Id" class="btn btn-outline-warning">
+                                    <i class="bi bi-clipboard-check"></i> Kiểm kê
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>

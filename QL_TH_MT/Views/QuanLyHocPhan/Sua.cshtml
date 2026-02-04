@@ -1,0 +1,72 @@
+@model HocPhanViewModel
+@{
+    ViewData["Title"] = "Sửa Học Phần";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <h2 class="mb-4">Sửa Học Phần</h2>
+            
+            <form method="post" asp-action="Sua" asp-route-id="@Model.Id" class="border p-4 rounded">
+                @Html.AntiForgeryToken()
+                
+                <input type="hidden" asp-for="Id" />
+
+                <div class="mb-3">
+                    <label asp-for="MaHocPhan" class="form-label">Mã Học Phần</label>
+                    <input type="text" asp-for="MaHocPhan" class="form-control" readonly />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="TenHocPhan" class="form-label">Tên Học Phần *</label>
+                    <input type="text" asp-for="TenHocPhan" class="form-control" required />
+                    <span asp-validation-for="TenHocPhan" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Nhom" class="form-label">Nhóm</label>
+                    <input type="text" asp-for="Nhom" class="form-control" />
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="SiSo" class="form-label">Sĩ Số *</label>
+                    <input type="number" asp-for="SiSo" class="form-control" min="1" required />
+                    <span asp-validation-for="SiSo" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="MonHocId" class="form-label">Môn Học *</label>
+                    <select asp-for="MonHocId" asp-items="ViewBag.MonHocs" class="form-select" required>
+                        <option value="">-- Chọn Môn Học --</option>
+                    </select>
+                    <span asp-validation-for="MonHocId" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="GiangVienId" class="form-label">Giảng Viên</label>
+                    <select asp-for="GiangVienId" asp-items="ViewBag.GiangViens" class="form-select">
+                        <option value="">-- Chọn Giảng Viên --</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="HocKyId" class="form-label">Học Kỳ *</label>
+                    <select asp-for="HocKyId" asp-items="ViewBag.HocKys" class="form-select" required>
+                        <option value="">-- Chọn Học Kỳ --</option>
+                    </select>
+                    <span asp-validation-for="HocKyId" class="text-danger"></span>
+                </div>
+
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">Lưu Thay Đổi</button>
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">Quay Lại</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

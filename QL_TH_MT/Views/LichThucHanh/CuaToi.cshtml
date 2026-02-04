@@ -1,0 +1,66 @@
+@model IEnumerable<LichThucHanhViewModel>
+@{
+    ViewData["Title"] = "Lịch thực hành của tôi";
+}
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-calendar-week me-2"></i>Lịch thực hành của tôi
+    </div>
+    <div class="card-body">
+        @if (Model != null && Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Học phần</th>
+                            <th>Môn học</th>
+                            <th>Phòng</th>
+                            <th>Thứ</th>
+                            <th>Ca</th>
+                            <th>Tuần</th>
+                            <th>Ngày</th>
+                            <th>Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.OrderBy(l => l.Tuan).ThenBy(l => l.Thu).ThenBy(l => l.Ca))
+                        {
+                            <tr class="@(item.NgayThucHanh < DateTime.Today ? "table-secondary" : "")">
+                                <td><code>@item.MaHocPhan</code></td>
+                                <td>@item.TenMonHoc</td>
+                                <td><span class="badge bg-info">@item.TenPhong</span></td>
+                                <td>Thứ @item.Thu</td>
+                                <td>Ca @item.Ca</td>
+                                <td>Tuần @item.Tuan</td>
+                                <td>@item.NgayThucHanh.ToString("dd/MM/yyyy")</td>
+                                <td>
+                                    @if (item.NgayThucHanh < DateTime.Today)
+                                    {
+                                        <span class="badge bg-secondary">Đã qua</span>
+                                    }
+                                    else if (item.NgayThucHanh == DateTime.Today)
+                                    {
+                                        <span class="badge bg-success">Hôm nay</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-primary">Sắp tới</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center py-4">
+                <i class="bi bi-calendar-x" style="font-size:48px"></i><br/>
+                Bạn chưa có lịch thực hành nào
+            </p>
+        }
+    </div>
+</div>

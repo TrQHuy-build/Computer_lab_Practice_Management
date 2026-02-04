@@ -1,0 +1,205 @@
+@model QL_TH_MT.ViewModels.DanhSachYeuCauViewModel
+@{
+    ViewData["Title"] = "Danh sách yêu cầu của tôi";
+}
+
+<h4 class="mb-4">
+    <i class="bi bi-list-check me-2"></i>Danh sách yêu cầu của tôi
+</h4>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="bi bi-check-circle me-2"></i>@TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="bi bi-exclamation-circle me-2"></i>@TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<div class="row">
+    <!-- Yêu cầu Mượn Bù -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <i class="bi bi-calendar-x me-2"></i>Yêu cầu Mượn Bù
+                <a href="@Url.Action("MuonBu")" class="btn btn-sm btn-light float-end">
+                    <i class="bi bi-plus"></i> Tạo mới
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.YeuCauMuonBus != null && Model.YeuCauMuonBus.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var yc in Model.YeuCauMuonBus)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@(yc.LichThucHanhGoc?.HocPhan?.TenHocPhan ?? "N/A")</h6>
+                                        <p class="mb-1 small">
+                                            <strong>Ngày gốc:</strong> @yc.NgayGoc.ToString("dd/MM/yyyy")<br/>
+                                            <strong>Ngày mới:</strong> @yc.NgayMoi.ToString("dd/MM/yyyy")
+                                            @if (yc.CaHocMoi.HasValue)
+                                            {
+                                                <span> - Ca @yc.CaHocMoi</span>
+                                            }
+                                        </p>
+                                        <p class="mb-0 small text-muted">
+                                            <strong>Lý do:</strong> @yc.LyDo
+                                        </p>
+                                        <small class="text-muted">Ngày tạo: @yc.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                    @{
+                                        var badgeClass = yc.TrangThai switch
+                                        {
+                                            0 => "bg-warning",
+                                            1 => "bg-success", 
+                                            2 => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                        var trangThaiText = yc.TrangThai switch
+                                        {
+                                            0 => "Chờ duyệt",
+                                            1 => "Đã duyệt",
+                                            2 => "Từ chối",
+                                            _ => "Không xác định"
+                                        };
+                                    }
+                                    <span class="badge @badgeClass">@trangThaiText</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        <i class="bi bi-inbox me-2"></i>Chưa có yêu cầu mượn bù nào
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Yêu cầu Đổi Phòng -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <i class="bi bi-door-open me-2"></i>Yêu cầu Đổi Phòng/Ca
+                <a href="@Url.Action("DoiPhong")" class="btn btn-sm btn-light float-end">
+                    <i class="bi bi-plus"></i> Tạo mới
+                </a>
+            </div>
+            <div class="card-body p-0">
+                @if (Model.YeuCauDoiPhongs != null && Model.YeuCauDoiPhongs.Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var yc in Model.YeuCauDoiPhongs)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@(yc.LichThucHanhGoc?.HocPhan?.TenHocPhan ?? "N/A")</h6>
+                                        <p class="mb-1 small">
+                                            @if (yc.PhongMoi != null)
+                                            {
+                                                <span class="badge bg-info me-1">Phòng: @yc.PhongMoi.TenPhong</span>
+                                            }
+                                            @if (yc.NgayThucHanhMoi.HasValue)
+                                            {
+                                                <span class="badge bg-secondary me-1">@yc.NgayThucHanhMoi.Value.ToString("dd/MM/yyyy")</span>
+                                            }
+                                            @if (yc.CaHocMoi.HasValue)
+                                            {
+                                                <span class="badge bg-secondary">Ca @yc.CaHocMoi</span>
+                                            }
+                                        </p>
+                                        <p class="mb-0 small text-muted">
+                                            <strong>Lý do:</strong> @yc.LyDo
+                                        </p>
+                                        <small class="text-muted">Ngày tạo: @yc.NgayTao.ToString("dd/MM/yyyy HH:mm")</small>
+                                    </div>
+                                    @{
+                                        var dpBadgeClass = yc.TrangThai switch
+                                        {
+                                            0 => "bg-warning",
+                                            1 => "bg-success",
+                                            2 => "bg-danger",
+                                            _ => "bg-secondary"
+                                        };
+                                        var dpTrangThaiText = yc.TrangThai switch
+                                        {
+                                            0 => "Chờ duyệt",
+                                            1 => "Đã duyệt",
+                                            2 => "Từ chối",
+                                            _ => "Không xác định"
+                                        };
+                                    }
+                                    <span class="badge @dpBadgeClass">@dpTrangThaiText</span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        <i class="bi bi-inbox me-2"></i>Chưa có yêu cầu đổi phòng nào
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Hiển thị popup thông báo từ TempData
+    document.addEventListener('DOMContentLoaded', function() {
+        @if (TempData["Success"] != null)
+        {
+            <text>
+                Swal.fire({
+                    title: 'Thành công!',
+                    text: '@Html.Raw(TempData["Success"].ToString().Replace("'", "\\'"))',
+                    icon: 'success',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#28a745',
+                    didOpen: function(modal) {
+                        modal.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        const titleEl = document.querySelector('.swal2-title');
+                        const textEl = document.querySelector('.swal2-html-container');
+                        if (titleEl) titleEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        if (textEl) textEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                    }
+                });
+            </text>
+        }
+        
+        @if (TempData["Error"] != null)
+        {
+            <text>
+                Swal.fire({
+                    title: 'Lỗi!',
+                    text: '@Html.Raw(TempData["Error"].ToString().Replace("'", "\\'"))',
+                    icon: 'error',
+                    confirmButtonText: 'Đóng',
+                    confirmButtonColor: '#dc3545',
+                    didOpen: function(modal) {
+                        modal.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        const titleEl = document.querySelector('.swal2-title');
+                        const textEl = document.querySelector('.swal2-html-container');
+                        if (titleEl) titleEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                        if (textEl) textEl.style.fontFamily = '"Segoe UI", Arial, sans-serif';
+                    }
+                });
+            </text>
+        }
+    });
+</script>

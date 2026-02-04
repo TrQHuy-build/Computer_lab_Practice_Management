@@ -1,0 +1,199 @@
+@model QL_TH_MT.ViewModels.TaoTaiKhoanViewModel
+@{
+    ViewData["Title"] = "Sửa tài khoản";
+    var taiKhoanId = ViewBag.TaiKhoanId;
+}
+
+<div class="container-fluid py-4">
+    <div class="row justify-content-center">
+        <div class="col-md-10 col-lg-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-warning text-white">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-pencil-square me-2" style="font-size: 1.5rem;"></i>
+                        <div>
+                            <h5 class="mb-0">Sửa tài khoản</h5>
+                            <small>Cập nhật thông tin tài khoản người dùng</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-4">
+                    @if (ViewData.ModelState.ErrorCount > 0)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                            <strong>Có lỗi xảy ra:</strong>
+                            <ul class="mb-0 mt-2">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Sua" asp-route-id="@taiKhoanId" method="post">
+                        @Html.AntiForgeryToken()
+                        
+                        <div class="alert alert-info mb-4">
+                            <i class="bi bi-info-circle-fill me-2"></i>
+                            <strong>Lưu ý:</strong> Tên đăng nhập không thể thay đổi. Để đổi mật khẩu, vui lòng sử dụng chức năng "Đổi mật khẩu" riêng.
+                        </div>
+
+                        <!-- Thông tin cơ bản -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-person me-2"></i>Thông tin cơ bản
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="TenDangNhap" class="form-label">
+                                            Tên đăng nhập <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="TenDangNhap" class="form-control bg-light" readonly />
+                                        <small class="text-muted">Tên đăng nhập không thể thay đổi</small>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="HoTen" class="form-label">
+                                            Họ và tên <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="HoTen" class="form-control" required />
+                                        <span asp-validation-for="HoTen" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="Email" class="form-label">
+                                            Email <span class="text-danger">*</span>
+                                        </label>
+                                        <input asp-for="Email" type="email" class="form-control" />
+                                        <span asp-validation-for="Email" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="SoDienThoai" class="form-label">Số điện thoại</label>
+                                        <input asp-for="SoDienThoai" class="form-control" />
+                                        <span asp-validation-for="SoDienThoai" class="text-danger"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Phân quyền -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">
+                                    <i class="bi bi-shield-check me-2"></i>Phân quyền
+                                </h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label asp-for="VaiTro" class="form-label">
+                                            Vai trò <span class="text-danger">*</span>
+                                        </label>
+                                        <select asp-for="VaiTro" class="form-select" id="vaiTroSelect" required>
+                                            <option value="">-- Chọn vai trò --</option>
+                                            <option value="1">Quản trị viên</option>
+                                            <option value="2">Phòng Đào tạo</option>
+                                            <option value="3">Trung tâm ĐTTH</option>
+                                            <option value="4">Giảng viên</option>
+                                        </select>
+                                        <span asp-validation-for="VaiTro" class="text-danger"></span>
+                                    </div>
+                                    <div class="col-md-6 mb-3" id="loaiGvDiv" style="@(Model.VaiTro == QL_TH_MT.Models.LoaiVaiTro.GiangVien ? "display:block" : "display:none")">
+                                        <label asp-for="LoaiGiangVien" class="form-label">
+                                            Loại giảng viên <span class="text-danger">*</span>
+                                        </label>
+                                        <select asp-for="LoaiGiangVien" class="form-select" id="loaiGvSelect">
+                                            <option value="">-- Chọn loại --</option>
+                                            <option value="1">Cố hữu</option>
+                                            <option value="2">Thỉnh giảng</option>
+                                        </select>
+                                        <span asp-validation-for="LoaiGiangVien" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="alert alert-secondary mb-0">
+                                    <small>
+                                        <strong>Vai trò:</strong>
+                                        <ul class="mb-0 mt-1">
+                                            <li><strong>Quản trị viên:</strong> Toàn quyền quản lý hệ thống</li>
+                                            <li><strong>Phòng Đào tạo:</strong> Quản lý học kỳ, học phần, sắp xếp lịch</li>
+                                            <li><strong>Trung tâm ĐTTH:</strong> Duyệt lịch, quản lý phòng, thiết bị</li>
+                                            <li><strong>Giảng viên:</strong> Xem lịch, gửi yêu cầu đổi phòng/mượn bù</li>
+                                        </ul>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Nút hành động -->
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="@Url.Action("DanhSach")" class="btn btn-secondary">
+                                <i class="bi bi-arrow-left me-1"></i>Quay lại
+                            </a>
+                            <button type="submit" class="btn btn-warning text-white">
+                                <i class="bi bi-check-lg me-1"></i>Cập nhật tài khoản
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    
+    <script>
+        // Hiển thị/ẩn trường Loại giảng viên dựa vào Vai trò
+        const vaiTroSelect = document.getElementById('vaiTroSelect');
+        const loaiGvDiv = document.getElementById('loaiGvDiv');
+        const loaiGvSelect = document.getElementById('loaiGvSelect');
+
+        function toggleLoaiGiangVien() {
+            if (vaiTroSelect.value === '4') { // 4 = GiangVien
+                loaiGvDiv.style.display = 'block';
+                loaiGvSelect.required = true;
+            } else {
+                loaiGvDiv.style.display = 'none';
+                loaiGvSelect.required = false;
+                loaiGvSelect.value = '';
+            }
+        }
+
+        vaiTroSelect.addEventListener('change', toggleLoaiGiangVien);
+
+        // Kiểm tra khi load trang
+        toggleLoaiGiangVien();
+    </script>
+}
+
+<style>
+    .card {
+        transition: box-shadow 0.3s ease;
+    }
+
+    .card:hover {
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+    }
+
+    .text-danger {
+        font-size: 0.875rem;
+    }
+
+    .alert ul {
+        padding-left: 1.5rem;
+    }
+</style>
