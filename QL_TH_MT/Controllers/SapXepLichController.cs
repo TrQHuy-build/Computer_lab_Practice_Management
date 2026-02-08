@@ -51,13 +51,26 @@ namespace QL_TH_MT.Controllers
             var giaiDoan = _hocKyService.XacDinhGiaiDoan(hocKy);
             var danhSachHocPhan = await _sapXepLichService.GetDanhSachHocPhanCanXepLich(hocKy.Id);
 
-            // Lấy lịch đã xếp
+            // Lấy lịch đã xếp - project to DTO to avoid circular references
             var lichDaXep = await _context.LichThucHanhs
-                .Include(l => l.HocPhan)
-                .Include(l => l.PhongThucHanh)
+                .AsNoTracking()
                 .Where(l => l.HocKyId == hocKy.Id)
                 .OrderBy(l => l.NgayThucHanh)
                 .ThenBy(l => l.CaHoc)
+                .Select(l => new LichThucHanhDto
+                {
+                    Id = l.Id,
+                    HocPhanId = l.HocPhanId,
+                    PhongThucHanhId = l.PhongThucHanhId,
+                    HocKyId = l.HocKyId,
+                    TuanHoc = l.TuanHoc,
+                    ThuTrongTuan = l.ThuTrongTuan,
+                    CaHoc = l.CaHoc,
+                    NgayThucHanh = l.NgayThucHanh,
+                    BuoiThu = l.BuoiThu,
+                    TrangThai = l.TrangThai,
+                    GhiChu = l.GhiChu
+                })
                 .ToListAsync();
 
             // Tính thống kê
@@ -214,7 +227,118 @@ namespace QL_TH_MT.Controllers
             return Json(new { success = true, message = $"Đã gửi {lichCanDuyet.Count} lịch sang TTDT duyệt!" });
         }
 
-        #region Helper
+        // POST: /SapXepLich/ThemLichThuCong
+        [HttpPost]
+        public async Task<IActionResult> ThemLichThuCong(
+            int HocPhanId,
+            int PhongThucHanhId,
+            DateTime NgayThucHanh,
+            int CaHoc,
+            int TuanHoc,
+            int? BuoiThu,
+            string? GhiChu)
+        {
+            if (!KiemTraQuyenPDT())
+            {
+                return Json(new { success = false, message = "Không có quyền thêm lịch" });
+            }
+
+            var hocKy = await _hocKyService.GetHocKyHienTaiAsync();
+            if (hocKy == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy học kỳ" });
+            }
+
+            // Validate học phần
+            var hocPhan = await _context.HocPhans
+                .Include(hp => hp.GiangVien)
+                .FirstOrDefaultAsync(hp => hp.Id == HocPhanId && hp.HocKyId == hocKy.Id);
+            
+            if (hocPhan == null)
+            {
+                return Json(new { success = false, message = "Không tìm thấy học phần" });
+            }
+
+            // Validate phòng
+            var phong = await _context.PhongThucHanhs.FindAsync(PhongThucHanhId);
+            if (phong == null || !phong.TrangThaiHoatDong)
+            {
+                return Json(new { success = false, message = "Phòng không khả dụng" });
+            }
+
+            // Lấy thứ trong tuần từ ngày
+            int thuTrongTuan = ((int)NgayThucHanh.DayOfWeek == 0) ? 8 : (int)NgayThucHanh.DayOfWeek + 1;
+
+            // Kiểm tra trùng lịch phòng
+            var trungLichPhong = await _context.LichThucHanhs
+                .AnyAsync(l => l.PhongThucHanhId == PhongThucHanhId &&
+                              l.NgayThucHanh.Date == NgayThucHanh.Date &&
+                              l.CaHoc == CaHoc &&
+                              l.TrangThai != 3); // Không tính lịch đã hủy
+
+            if (trungLichPhong)
+            {
+                return Json(new { success = false, message = "Phòng đã có lịch vào thời gian này!" });
+            }
+
+            // Kiểm tra trùng lịch giảng viên
+            if (hocPhan.GiangVienId.HasValue)
+            {
+                var trungLichGV = await _context.LichThucHanhs
+                    .Include(l => l.HocPhan)
+                    .AnyAsync(l => l.HocPhan.GiangVienId == hocPhan.GiangVienId &&
+                                  l.NgayThucHanh.Date == NgayThucHanh.Date &&
+                                  l.CaHoc == CaHoc &&
+                                  l.TrangThai != 3);
+
+                if (trungLichGV)
+                {
+                    return Json(new { success = false, message = "Giảng viên đã có lịch dạy vào thời gian này!" });
+                }
+            }
+
+            // Tạo lịch mới
+            var lichMoi = new LichThucHanhNew
+            {
+                HocPhanId = HocPhanId,
+                PhongThucHanhId = PhongThucHanhId,
+                HocKyId = hocKy.Id,
+                NgayThucHanh = NgayThucHanh,
+                ThuTrongTuan = thuTrongTuan,
+                CaHoc = CaHoc,
+                TuanHoc = TuanHoc,
+                BuoiThu = BuoiThu ?? 1,
+                TrangThai = 0, // Chờ PDT gửi duyệt
+                GhiChu = GhiChu,
+                NgayTao = DateTime.Now
+            };
+
+            _context.LichThucHanhs.Add(lichMoi);
+            await _context.SaveChangesAsync();
+
+            // Gửi thông báo cho giảng viên (nếu có)
+            if (hocPhan.GiangVienId.HasValue)
+            {
+                await _thongBaoService.GuiThongBao(
+                    "Lịch thực hành mới",
+                    $"Bạn có lịch thực hành mới vào ngày {NgayThucHanh:dd/MM/yyyy}, Ca {CaHoc}, Phòng {phong.TenPhong}",
+                    "ThongBaoLich",
+                    hocPhan.GiangVienId.Value,
+                    GetUserId(),
+                    "/LichThucHanh/CuaToi");
+            }
+
+            return Json(new { 
+                success = true, 
+                message = "Đã thêm lịch thành công!",
+                data = new {
+                    id = lichMoi.Id,
+                    ngayThucHanh = NgayThucHanh.ToString("dd/MM/yyyy"),
+                    caHoc = CaHoc,
+                    phong = phong.TenPhong
+                }
+            });
+        }
 
         private bool KiemTraQuyenPDT()
         {
@@ -226,7 +350,5 @@ namespace QL_TH_MT.Controllers
         {
             return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         }
-
-        #endregion
     }
 }

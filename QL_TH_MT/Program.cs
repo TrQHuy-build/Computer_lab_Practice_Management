@@ -5,8 +5,13 @@ using QL_TH_MT.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add MVC
-builder.Services.AddControllersWithViews();
+// Add MVC với cấu hình JSON để xử lý circular references
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+        options.JsonSerializerOptions.DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull;
+    });
 
 // Cấu hình Logging
 builder.Logging.ClearProviders();

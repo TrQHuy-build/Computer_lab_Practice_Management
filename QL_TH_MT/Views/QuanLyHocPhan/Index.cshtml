@@ -113,6 +113,8 @@
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Đang xử lý...';
             
+            Notify.loading('Đang tạo học phần từ hợp đồng...');
+            
             fetch('/QuanLyHocPhan/TaoTuHopDong', {
                 method: 'POST',
                 headers: {
@@ -121,17 +123,20 @@
             })
             .then(response => response.json())
             .then(data => {
+                Notify.closeLoading();
                 if (data.success) {
-                    alert(data.message);
-                    location.reload();
+                    Notify.success(data.message, 'Tạo học phần thành công!', function() {
+                        location.reload();
+                    });
                 } else {
-                    alert('Lỗi: ' + data.message);
+                    Notify.error(data.message, 'Lỗi tạo học phần!');
                     btn.disabled = false;
                     btn.innerHTML = '<i class="bi bi-lightning me-1"></i>Tạo từ hợp đồng';
                 }
             })
             .catch(error => {
-                alert('Lỗi kết nối: ' + error);
+                Notify.closeLoading();
+                Notify.error('Lỗi kết nối: ' + error, 'Lỗi!');
                 btn.disabled = false;
                 btn.innerHTML = '<i class="bi bi-lightning me-1"></i>Tạo từ hợp đồng';
             });

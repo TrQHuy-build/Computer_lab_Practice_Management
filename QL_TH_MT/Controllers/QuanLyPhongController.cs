@@ -65,7 +65,29 @@ namespace QL_TH_MT.Controllers
                 return NotFound();
             }
 
-            return View(phong);
+            var viewModel = new PhongThucHanhViewModel
+            {
+                Id = phong.Id,
+                MaPhong = phong.MaPhong,
+                TenPhong = phong.TenPhong,
+                ViTri = phong.ViTri,
+                SucChua = phong.SucChua,
+                SoMayHoatDong = phong.SoMayHoatDong,
+                MoTa = phong.MoTa,
+                TrangThaiHoatDong = phong.TrangThaiHoatDong,
+                DangHoatDong = phong.TrangThaiHoatDong,
+                NgayKiemKeGanNhat = phong.NgayKiemKeGanNhat,
+                TenNguoiKiemKe = phong.NguoiKiemKe?.HoTen,
+                DanhSachPhanMem = phong.PhanMems?.Select(pm => new PhanMemTrongPhongViewModel
+                {
+                    PhanMemId = pm.PhanMemId,
+                    TenPhanMem = pm.PhanMem?.TenPhanMem ?? "",
+                    PhienBan = pm.PhanMem?.PhienBan,
+                    NgayCaiDat = pm.NgayCaiDat
+                }).ToList() ?? new List<PhanMemTrongPhongViewModel>()
+            };
+
+            return View(viewModel);
         }
 
         // GET: /QuanLyPhong/Tao
@@ -77,13 +99,13 @@ namespace QL_TH_MT.Controllers
                 return RedirectToAction("TuChoiTruyCap", "TaiKhoan");
             }
 
-            return View(new PhongThucHanhViewModel());
+            return View(new PhongThucHanhCreateViewModel());
         }
 
         // POST: /QuanLyPhong/Tao
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Tao(PhongThucHanhViewModel model)
+        public async Task<IActionResult> Tao(PhongThucHanhCreateViewModel model)
         {
             if (!KiemTraQuyen())
             {
@@ -198,10 +220,24 @@ namespace QL_TH_MT.Controllers
             var giaiDoan = _hocKyService.XacDinhGiaiDoan(hocKy);
 
             ViewBag.ChoPhepKiemKe = giaiDoan == GiaiDoanHocKy.Tuan1_NhapHopDong;
+            ViewBag.HocKy = hocKy;
 
             var danhSach = await _context.PhongThucHanhs
                 .Include(p => p.NguoiKiemKe)
                 .OrderBy(p => p.NgayKiemKeGanNhat ?? DateTime.MinValue)
+                .Select(p => new PhongThucHanhViewModel
+                {
+                    Id = p.Id,
+                    MaPhong = p.MaPhong,
+                    TenPhong = p.TenPhong,
+                    ViTri = p.ViTri,
+                    SucChua = p.SucChua,
+                    SoMayHoatDong = p.SoMayHoatDong,
+                    TrangThaiHoatDong = p.TrangThaiHoatDong,
+                    DangHoatDong = p.TrangThaiHoatDong,
+                    NgayKiemKeGanNhat = p.NgayKiemKeGanNhat,
+                    TenNguoiKiemKe = p.NguoiKiemKe != null ? p.NguoiKiemKe.HoTen : null
+                })
                 .ToListAsync();
 
             return View(danhSach);
@@ -209,18 +245,29 @@ namespace QL_TH_MT.Controllers
 
         // POST: /QuanLyPhong/KiemKe/5
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> KiemKe(KiemKePhongViewModel model)
+        public async Task<IActionResult> KiemKe([FromBody] KiemKePhongViewModel model)
         {
             if (!KiemTraQuyen())
             {
-                return Json(new { success = false, message = "Không có quyền" });
+                return Json(new { success = false, message = "Không có quyền thực hiện kiểm kê" });
+            }
+
+            // Validate input
+            if (model.SoMayHoatDong < 0)
+            {
+                return Json(new { success = false, message = "Số máy hoạt động không hợp lệ" });
             }
 
             var phong = await _context.PhongThucHanhs.FindAsync(model.PhongId);
             if (phong == null)
             {
                 return Json(new { success = false, message = "Không tìm thấy phòng" });
+            }
+
+            // Validate số máy không vượt quá sức chứa
+            if (model.SoMayHoatDong > phong.SucChua)
+            {
+                return Json(new { success = false, message = $"Số máy hoạt động không được vượt quá sức chứa ({phong.SucChua} máy)" });
             }
 
             phong.SoMayHoatDong = model.SoMayHoatDong;
@@ -231,7 +278,15 @@ namespace QL_TH_MT.Controllers
 
             await _context.SaveChangesAsync();
 
-            return Json(new { success = true, message = $"Kiểm kê phòng {phong.MaPhong} thành công!" });
+            return Json(new { 
+                success = true, 
+                message = $"Đã kiểm kê phòng {phong.MaPhong} thành công!",
+                data = new {
+                    soMayHoatDong = phong.SoMayHoatDong,
+                    trangThai = phong.TrangThaiHoatDong ? "Hoạt động" : "Ngừng",
+                    ngayKiemKe = phong.NgayKiemKeGanNhat.Value.ToString("dd/MM/yyyy HH:mm")
+                }
+            });
         }
 
         // POST: /QuanLyPhong/Xoa/5

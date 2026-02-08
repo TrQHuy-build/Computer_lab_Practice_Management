@@ -97,7 +97,7 @@ namespace QL_TH_MT.Controllers
                 return View("Index", new DanhSachLichThucHanhViewModel());
             }
 
-            var danhSach = await _context.LichThucHanhs
+            var danhSachLich = await _context.LichThucHanhs
                 .Include(l => l.HocPhan)
                     .ThenInclude(hp => hp!.MonHoc)
                 .Include(l => l.PhongThucHanh)
@@ -106,9 +106,31 @@ namespace QL_TH_MT.Controllers
                 .ThenBy(l => l.CaHoc)
                 .ToListAsync();
 
+            // Map to ViewModel
+            var viewModel = danhSachLich.Select(l => new LichThucHanhViewModel
+            {
+                Id = l.Id,
+                HocPhanId = l.HocPhanId,
+                PhongThucHanhId = l.PhongThucHanhId,
+                HocKyId = l.HocKyId,
+                TuanHoc = l.TuanHoc,
+                ThuTrongTuan = l.ThuTrongTuan,
+                CaHoc = l.CaHoc,
+                NgayThucHanh = l.NgayThucHanh,
+                BuoiThu = l.BuoiThu,
+                GhiChu = l.GhiChu,
+                TrangThai = l.TrangThai,
+                MaHocPhan = l.HocPhan?.MaHocPhan ?? "",
+                TenMonHoc = l.HocPhan?.MonHoc?.TenMonHoc ?? "",
+                TenPhong = l.PhongThucHanh?.TenPhong ?? "",
+                Tuan = l.TuanHoc,
+                Thu = l.ThuTrongTuan,
+                Ca = l.CaHoc
+            }).ToList();
+
             ViewBag.TieuDe = "Lịch giảng dạy của tôi";
 
-            return View("DanhSachCuaToi", danhSach);
+            return View("CuaToi", viewModel);
         }
 
         // GET: /LichThucHanh/ChiTiet/5

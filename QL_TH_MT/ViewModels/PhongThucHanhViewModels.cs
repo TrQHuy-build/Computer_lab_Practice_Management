@@ -117,6 +117,11 @@ namespace QL_TH_MT.ViewModels
 
     public class PhongThucHanhCreateViewModel
     {
+        [Required(ErrorMessage = "Vui lòng nhập mã phòng")]
+        [StringLength(20)]
+        [Display(Name = "Mã phòng")]
+        public string MaPhong { get; set; } = string.Empty;
+
         [Required(ErrorMessage = "Vui lòng nhập tên phòng")]
         [Display(Name = "Tên phòng")]
         public string TenPhong { get; set; } = string.Empty;
@@ -127,13 +132,16 @@ namespace QL_TH_MT.ViewModels
         [Required]
         [Range(1, 100)]
         [Display(Name = "Sức chứa")]
-        public int SucChua { get; set; }
+        public int SucChua { get; set; } = 40;
 
         [Display(Name = "Số máy hoạt động")]
-        public int SoMayHoatDong { get; set; }
+        public int SoMayHoatDong { get; set; } = 40;
 
         [Display(Name = "Mô tả")]
         public string? MoTa { get; set; }
+
+        [Display(Name = "Trạng thái hoạt động")]
+        public bool TrangThaiHoatDong { get; set; } = true;
 
         public List<int>? PhanMemIds { get; set; }
     }

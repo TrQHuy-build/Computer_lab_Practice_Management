@@ -1,4 +1,4 @@
-@model ChangePasswordViewModel
+@model QL_TH_MT.ViewModels.DoiMatKhauViewModel
 @{
     ViewData["Title"] = "Đổi mật khẩu";
 }
@@ -12,9 +12,9 @@
             <div class="card-body">
                 <form asp-action="DoiMatKhau" method="post">
                     <div class="mb-3">
-                        <label asp-for="MatKhauHienTai" class="form-label">Mật khẩu hiện tại <span class="text-danger">*</span></label>
-                        <input asp-for="MatKhauHienTai" type="password" class="form-control" required />
-                        <span asp-validation-for="MatKhauHienTai" class="text-danger"></span>
+                        <label asp-for="MatKhauCu" class="form-label">Mật khẩu hiện tại <span class="text-danger">*</span></label>
+                        <input asp-for="MatKhauCu" type="password" class="form-control" required />
+                        <span asp-validation-for="MatKhauCu" class="text-danger"></span>
                     </div>
                     
                     <div class="mb-3">
@@ -25,9 +25,9 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label asp-for="XacNhanMatKhau" class="form-label">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
-                        <input asp-for="XacNhanMatKhau" type="password" class="form-control" required />
-                        <span asp-validation-for="XacNhanMatKhau" class="text-danger"></span>
+                        <label asp-for="XacNhanMatKhauMoi" class="form-label">Xác nhận mật khẩu mới <span class="text-danger">*</span></label>
+                        <input asp-for="XacNhanMatKhauMoi" type="password" class="form-control" required />
+                        <span asp-validation-for="XacNhanMatKhauMoi" class="text-danger"></span>
                     </div>
                     
                     <hr />

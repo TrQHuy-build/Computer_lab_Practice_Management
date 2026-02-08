@@ -47,6 +47,23 @@ namespace QL_TH_MT.Controllers
                 {
                     case LoaiVaiTro.Admin:
                         viewModel.DanhSachCongViec = GetCongViecAdmin();
+                        // Thống kê toàn hệ thống cho Admin
+                        viewModel.ThongKe = new Dictionary<string, int>
+                        {
+                            ["Tổng tài khoản"] = await _context.TaiKhoans.CountAsync(),
+                            ["Tài khoản hoạt động"] = await _context.TaiKhoans.CountAsync(tk => tk.TrangThaiHoatDong),
+                            ["Tổng học kỳ"] = await _context.HocKys.CountAsync(),
+                            ["Tổng môn học"] = await _context.MonHocs.CountAsync(m => m.TrangThaiHoatDong),
+                            ["Tổng phòng thực hành"] = await _context.PhongThucHanhs.CountAsync(),
+                            ["Phòng hoạt động"] = await _context.PhongThucHanhs.CountAsync(p => p.TrangThaiHoatDong),
+                            ["Giảng viên cố hữu"] = await _context.TaiKhoans.CountAsync(t => t.VaiTro == LoaiVaiTro.GiangVien && t.LoaiGiangVien == LoaiGiangVien.CoHuu && t.TrangThaiHoatDong),
+                            ["Giảng viên thỉnh giảng"] = await _context.TaiKhoans.CountAsync(t => t.VaiTro == LoaiVaiTro.GiangVien && t.LoaiGiangVien == LoaiGiangVien.ThinhGiang && t.TrangThaiHoatDong)
+                        };
+                        if (hocKy != null)
+                        {
+                            viewModel.ThongKe["Học phần (học kỳ hiện tại)"] = await _context.HocPhans.CountAsync(hp => hp.HocKyId == hocKy.Id);
+                            viewModel.ThongKe["Lịch thực hành đã xếp"] = await _context.LichThucHanhs.CountAsync(l => l.HocKyId == hocKy.Id);
+                        }
                         break;
 
                     case LoaiVaiTro.PhongDaoTao:
@@ -86,9 +103,65 @@ namespace QL_TH_MT.Controllers
                 new CongViecViewModel
                 {
                     TieuDe = "Quản lý tài khoản",
-                    MoTa = "Tạo và quản lý tài khoản người dùng",
+                    MoTa = "Tạo, sửa, xóa tài khoản người dùng",
                     Link = "/TaiKhoan/DanhSach",
                     Icon = "bi-people",
+                    MauSac = "primary"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Quản lý học kỳ",
+                    MoTa = "Thiết lập các mốc thời gian học kỳ",
+                    Link = "/QuanLyHocKy",
+                    Icon = "bi-calendar-event",
+                    MauSac = "info"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Quản lý môn học",
+                    MoTa = "Quản lý danh sách môn học",
+                    Link = "/QuanLyMonHoc",
+                    Icon = "bi-book",
+                    MauSac = "success"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Quản lý phòng thực hành",
+                    MoTa = "Quản lý phòng máy và thiết bị",
+                    Link = "/QuanLyPhong",
+                    Icon = "bi-building",
+                    MauSac = "warning"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Quản lý học phần",
+                    MoTa = "Xem và quản lý học phần",
+                    Link = "/QuanLyHocPhan",
+                    Icon = "bi-collection",
+                    MauSac = "secondary"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Xem lịch thực hành",
+                    MoTa = "Xem tổng quan lịch hệ thống",
+                    Link = "/LichThucHanh",
+                    Icon = "bi-table",
+                    MauSac = "dark"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Quản lý hợp đồng",
+                    MoTa = "Quản lý hợp đồng giảng dạy",
+                    Link = "/QuanLyHopDong",
+                    Icon = "bi-file-earmark-text",
+                    MauSac = "danger"
+                },
+                new CongViecViewModel
+                {
+                    TieuDe = "Sắp xếp lịch",
+                    MoTa = "Công cụ sắp xếp lịch tự động",
+                    Link = "/SapXepLich",
+                    Icon = "bi-calendar-check",
                     MauSac = "primary"
                 }
             };

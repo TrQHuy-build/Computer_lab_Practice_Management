@@ -3,6 +3,22 @@ using QL_TH_MT.Models;
 
 namespace QL_TH_MT.ViewModels
 {
+    // ====== DTO for JSON serialization without circular references ======
+    public class LichThucHanhDto
+    {
+        public int Id { get; set; }
+        public int HocPhanId { get; set; }
+        public int PhongThucHanhId { get; set; }
+        public int HocKyId { get; set; }
+        public int TuanHoc { get; set; }
+        public int ThuTrongTuan { get; set; }
+        public int CaHoc { get; set; }
+        public DateTime NgayThucHanh { get; set; }
+        public int BuoiThu { get; set; }
+        public int TrangThai { get; set; }
+        public string? GhiChu { get; set; }
+    }
+
     // ====== SẮP XẾP LỊCH ======
     public class SapXepLichViewModel
     {
@@ -20,8 +36,8 @@ namespace QL_TH_MT.ViewModels
         // Danh sách phòng trống
         public List<PhongThucHanhNew> DanhSachPhong { get; set; } = new();
 
-        // Kết quả xếp lịch
-        public List<LichThucHanhNew> KetQuaXepLich { get; set; } = new();
+        // Kết quả xếp lịch (simple DTO for JSON serialization)
+        public List<LichThucHanhDto> KetQuaXepLich { get; set; } = new();
         
         // Danh sách lịch đã xếp (cho view)
         public List<LichDaXepViewModel> LichDaXep { get; set; } = new();
