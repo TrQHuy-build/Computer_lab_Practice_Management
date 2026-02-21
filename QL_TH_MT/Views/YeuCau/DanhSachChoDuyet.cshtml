@@ -1,0 +1,224 @@
+@{
+    ViewData["Title"] = "Duyệt yêu cầu";
+}
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link @(ViewBag.Tab == "muonbu" ? "active" : "")" href="/YeuCau/DanhSachChoDuyet?tab=muonbu">
+            Mượn bù
+            @if (ViewBag.SoMuonBu > 0)
+            {
+                <span class="badge bg-danger">@ViewBag.SoMuonBu</span>
+            }
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @(ViewBag.Tab == "doiphong" ? "active" : "")" href="/YeuCau/DanhSachChoDuyet?tab=doiphong">
+            Đổi phòng/ca
+            @if (ViewBag.SoDoiPhong > 0)
+            {
+                <span class="badge bg-danger">@ViewBag.SoDoiPhong</span>
+            }
+        </a>
+    </li>
+</ul>
+
+@if (ViewBag.Tab == "muonbu")
+{
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-calendar-x me-2"></i>Yêu cầu mượn bù chờ duyệt
+        </div>
+        <div class="card-body">
+            @if (ViewBag.YeuCauMuonBu != null && ((IEnumerable<dynamic>)ViewBag.YeuCauMuonBu).Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Giảng viên</th>
+                                <th>Lịch gốc</th>
+                                <th>Loại</th>
+                                <th>Ngày thay thế</th>
+                                <th>Ca</th>
+                                <th>Lý do</th>
+                                <th>Ngày gửi</th>
+                                <th width="150">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var yc in ViewBag.YeuCauMuonBu)
+                            {
+                                <tr>
+                                    <td>@yc.TenGiangVien</td>
+                                    <td>@yc.TenLich</td>
+                                    <td>
+                                        <span class="badge @(yc.LoaiYeuCau == "Muon" ? "bg-info" : "bg-warning text-dark")">
+                                            @(yc.LoaiYeuCau == "Muon" ? "Mượn" : "Bù")
+                                        </span>
+                                    </td>
+                                    <td>@yc.NgayThayThe.ToString("dd/MM/yyyy")</td>
+                                    <td>Ca @yc.CaThayThe</td>
+                                    <td>
+                                        <span data-bs-toggle="tooltip" title="@yc.LyDo">
+                                            @(yc.LyDo.Length > 30 ? yc.LyDo.Substring(0, 30) + "..." : yc.LyDo)
+                                        </span>
+                                    </td>
+                                    <td>@yc.NgayTao.ToString("dd/MM")</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <form asp-action="DuyetMuonBu" asp-route-id="@yc.Id" method="post" style="display:inline">
+                                                <button type="submit" class="btn btn-success" title="Duyệt">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-danger" title="Từ chối"
+                                                    onclick="showRejectModal(@yc.Id, 'muonbu')">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted text-center py-4">
+                    <i class="bi bi-check-circle" style="font-size:48px"></i><br/>
+                    Không có yêu cầu nào chờ duyệt
+                </p>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="card">
+        <div class="card-header">
+            <i class="bi bi-door-open me-2"></i>Yêu cầu đổi phòng/ca chờ duyệt
+        </div>
+        <div class="card-body">
+            @if (ViewBag.YeuCauDoiPhong != null && ((IEnumerable<dynamic>)ViewBag.YeuCauDoiPhong).Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Giảng viên</th>
+                                <th>Lịch gốc</th>
+                                <th>Yêu cầu đổi</th>
+                                <th>Lý do</th>
+                                <th>PDT</th>
+                                <th>TT ĐTTH</th>
+                                <th width="150">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var yc in ViewBag.YeuCauDoiPhong)
+                            {
+                                <tr>
+                                    <td>@yc.TenGiangVien</td>
+                                    <td>@yc.TenLich</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(yc.PhongMoi))
+                                        {
+                                            <span class="badge bg-info me-1">Phòng: @yc.PhongMoi</span>
+                                        }
+                                        @if (yc.ThuMoi != null)
+                                        {
+                                            <span class="badge bg-secondary me-1">T@yc.ThuMoi</span>
+                                        }
+                                        @if (yc.CaMoi != null)
+                                        {
+                                            <span class="badge bg-secondary">Ca@yc.CaMoi</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <span data-bs-toggle="tooltip" title="@yc.LyDo">
+                                            @(yc.LyDo.Length > 20 ? yc.LyDo.Substring(0, 20) + "..." : yc.LyDo)
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(yc.PDTDuyet == true ? "bg-success" : yc.PDTDuyet == false ? "bg-danger" : "bg-warning")">
+                                            @(yc.PDTDuyet == true ? "✓" : yc.PDTDuyet == false ? "✗" : "?")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge @(yc.TTDTDuyet == true ? "bg-success" : yc.TTDTDuyet == false ? "bg-danger" : "bg-warning")">
+                                            @(yc.TTDTDuyet == true ? "✓" : yc.TTDTDuyet == false ? "✗" : "?")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <form asp-action="DuyetDoiPhong" asp-route-id="@yc.Id" method="post" style="display:inline">
+                                                <button type="submit" class="btn btn-success" title="Duyệt">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </button>
+                                            </form>
+                                            <button type="button" class="btn btn-danger" title="Từ chối"
+                                                    onclick="showRejectModal(@yc.Id, 'doiphong')">
+                                                <i class="bi bi-x-lg"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted text-center py-4">
+                    <i class="bi bi-check-circle" style="font-size:48px"></i><br/>
+                    Không có yêu cầu nào chờ duyệt
+                </p>
+            }
+        </div>
+    </div>
+}
+
+<!-- Modal từ chối -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="rejectForm" method="post">
+                <input type="hidden" name="id" id="rejectId">
+                <div class="modal-header">
+                    <h5 class="modal-title">Từ chối yêu cầu</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Lý do từ chối <span class="text-danger">*</span></label>
+                        <textarea name="lyDo" class="form-control" rows="3" required 
+                                  placeholder="Nhập lý do từ chối..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="submit" class="btn btn-danger">Từ chối</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showRejectModal(id, type) {
+            document.getElementById('rejectId').value = id;
+            document.getElementById('rejectForm').action = type === 'muonbu' 
+                ? '/YeuCau/TuChoiMuonBu/' + id 
+                : '/YeuCau/TuChoiDoiPhong/' + id;
+            new bootstrap.Modal(document.getElementById('rejectModal')).show();
+        }
+        
+        // Enable tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        tooltipTriggerList.map(function (el) { return new bootstrap.Tooltip(el); });
+    </script>
+}

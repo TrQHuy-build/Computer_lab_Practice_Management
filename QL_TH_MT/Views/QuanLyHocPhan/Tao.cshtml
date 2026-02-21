@@ -1,0 +1,71 @@
+@model HocPhanCreateViewModel
+@{
+    ViewData["Title"] = "Thêm học phần";
+}
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-collection me-2"></i>Thêm học phần mới
+            </div>
+            <div class="card-body">
+                <form asp-action="Tao" method="post">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MaHocPhan" class="form-label">Mã học phần <span class="text-danger">*</span></label>
+                            <input asp-for="MaHocPhan" class="form-control" placeholder="VD: HP001" required />
+                            <span asp-validation-for="MaHocPhan" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="SiSo" class="form-label">Sĩ số <span class="text-danger">*</span></label>
+                            <input asp-for="SiSo" type="number" class="form-control" min="1" required />
+                            <span asp-validation-for="SiSo" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="MonHocId" class="form-label">Môn học <span class="text-danger">*</span></label>
+                            <select asp-for="MonHocId" asp-items="ViewBag.MonHocs" class="form-select" required>
+                                <option value="">-- Chọn môn học --</option>
+                            </select>
+                            <span asp-validation-for="MonHocId" class="text-danger"></span>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="GiangVienId" class="form-label">Giảng viên <span class="text-danger">*</span></label>
+                            <select asp-for="GiangVienId" asp-items="ViewBag.GiangViens" class="form-select" required>
+                                <option value="">-- Chọn giảng viên --</option>
+                            </select>
+                            <span asp-validation-for="GiangVienId" class="text-danger"></span>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="HocKyId" class="form-label">Học kỳ <span class="text-danger">*</span></label>
+                        <select asp-for="HocKyId" asp-items="ViewBag.HocKys" class="form-select" required>
+                            <option value="">-- Chọn học kỳ --</option>
+                        </select>
+                        <span asp-validation-for="HocKyId" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="GhiChu" class="form-label">Ghi chú</label>
+                        <textarea asp-for="GhiChu" class="form-control" rows="3"></textarea>
+                    </div>
+                    
+                    <hr />
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="/QuanLyHocPhan" class="btn btn-secondary">
+                            <i class="bi bi-arrow-left me-1"></i>Quay lại
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg me-1"></i>Thêm học phần
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

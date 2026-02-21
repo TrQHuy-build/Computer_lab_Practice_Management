@@ -1,0 +1,244 @@
+@model SapXepLichViewModel
+@{
+    ViewData["Title"] = "Sắp xếp lịch thực hành";
+    var choPhep = Model?.ChoPhepXepLich ?? false;
+}
+
+@if (!choPhep)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Lưu ý:</strong> Hiện không phải giai đoạn sắp xếp lịch (Tuần 3 tiền học kỳ).
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="text-primary">@(Model?.TongHocPhan ?? 0)</h3>
+                <p class="mb-0">Học phần cần xếp lịch</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="text-success">@(Model?.DaXepLich ?? 0)</h3>
+                <p class="mb-0">Đã xếp lịch</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <h3 class="text-warning">@(Model?.ChuaXepLich ?? 0)</h3>
+                <p class="mb-0">Chưa xếp lịch</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (choPhep)
+{
+    <div class="card mb-4">
+        <div class="card-header">
+            <i class="bi bi-gear me-2"></i>Sắp xếp lịch tự động
+        </div>
+        <div class="card-body">
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Thuật toán sắp xếp:</strong>
+                <ul class="mb-0 mt-2">
+                    <li>Ưu tiên giảng viên <strong>thỉnh giảng</strong> được xếp trước theo lịch đăng ký</li>
+                    <li>Giảng viên <strong>cố hữu</strong> được xếp vào các slot còn trống</li>
+                    <li>Đảm bảo tối thiểu <strong>3 tuần liên tiếp</strong> cùng ngày/ca</li>
+                    <li>Không xếp lịch vào <strong>3 tuần cuối</strong> (giai đoạn thi)</li>
+                </ul>
+            </div>
+            
+            <!-- Khu vực hiển thị kết quả -->
+            <div id="ketQuaSapXep" class="mb-3" style="display:none;"></div>
+            
+            <form id="formSapXep" asp-action="TuDong" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row align-items-end">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Phòng thực hành</label>
+                        <select name="PhongIds" class="form-select" multiple size="4">
+                            @if (Model?.DanhSachPhong != null)
+                            {
+                                foreach (var p in Model.DanhSachPhong)
+                                {
+                                    <option value="@p.Id" selected>@p.TenPhong (@p.SoMayHoatDong máy)</option>
+                                }
+                            }
+                        </select>
+                        <small class="text-muted">Giữ Ctrl để chọn nhiều</small>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="form-check mb-2">
+                            <input type="checkbox" name="GiuLichCu" value="true" class="form-check-input" id="giuLichCu">
+                            <label class="form-check-label" for="giuLichCu">Giữ nguyên lịch đã xếp</label>
+                        </div>
+                        <div class="form-check">
+                            <input type="checkbox" name="UuTienDangKy" value="true" class="form-check-input" id="uuTienDangKy" checked>
+                            <label class="form-check-label" for="uuTienDangKy">Ưu tiên lịch đăng ký GV thỉnh giảng</label>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <button type="submit" id="btnSapXep" class="btn btn-primary btn-lg w-100">
+                            <i class="bi bi-magic me-2"></i>Sắp xếp tự động
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar-week me-2"></i>Lịch thực hành đã xếp</span>
+        @if (choPhep && (Model?.DaXepLich ?? 0) > 0)
+        {
+            <form asp-action="GuiTTDT" method="post" style="display:inline">
+                <button type="submit" class="btn btn-success btn-sm"
+                        onclick="return confirm('Gửi lịch cho Trung tâm ĐTTH để duyệt?')">
+                    <i class="bi bi-send me-1"></i>Gửi TT ĐTTH duyệt
+                </button>
+            </form>
+        }
+    </div>
+    <div class="card-body">
+        @if (Model?.LichDaXep != null && Model.LichDaXep.Any())
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Học phần</th>
+                            <th>Giảng viên</th>
+                            <th>Phòng</th>
+                            <th>Thứ</th>
+                            <th>Ca</th>
+                            <th>Tuần</th>
+                            @if (choPhep)
+                            {
+                                <th width="80">Thao tác</th>
+                            }
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var lich in Model.LichDaXep)
+                        {
+                            <tr>
+                                <td><code>@lich.MaHocPhan</code></td>
+                                <td>
+                                    @lich.TenGiangVien
+                                    <span class="badge @(lich.LoaiGV == "ThinhGiang" ? "bg-warning text-dark" : "bg-info") ms-1">
+                                        @(lich.LoaiGV == "ThinhGiang" ? "TG" : "CH")
+                                    </span>
+                                </td>
+                                <td>@lich.TenPhong</td>
+                                <td>Thứ @lich.Thu</td>
+                                <td>Ca @lich.Ca</td>
+                                <td>@lich.Tuan</td>
+                                @if (choPhep)
+                                {
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger btn-sm"
+                                                onclick="xoaLich(@lich.Id)">
+                                            <i class="bi bi-x"></i>
+                                        </button>
+                                    </td>
+                                }
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center py-4">
+                <i class="bi bi-calendar-x" style="font-size:48px"></i><br/>
+                Chưa có lịch nào được xếp
+            </p>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Xử lý form sắp xếp lịch bằng AJAX
+        document.getElementById('formSapXep')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const btn = document.getElementById('btnSapXep');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Đang xử lý...';
+            btn.disabled = true;
+            
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                const ketQuaDiv = document.getElementById('ketQuaSapXep');
+                ketQuaDiv.style.display = 'block';
+                
+                if (data.success) {
+                    let html = `
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            <h5 class="alert-heading"><i class="bi bi-check-circle me-2"></i>Thành công!</h5>
+                            <p class="mb-0">${data.message}</p>
+                            <hr>
+                            <p class="mb-0"><strong>Số lịch đã xếp:</strong> ${data.soLichXep} buổi</p>`;
+                    
+                    if (data.canhBao && data.canhBao.length > 0) {
+                        html += `<hr><p class="mb-1"><strong><i class="bi bi-exclamation-triangle me-1"></i>Cảnh báo:</strong></p><ul class="mb-0">`;
+                        data.canhBao.forEach(cb => {
+                            html += `<li>${cb}</li>`;
+                        });
+                        html += `</ul>`;
+                    }
+                    
+                    html += `<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`;
+                    ketQuaDiv.innerHTML = html;
+                    
+                    // Reload trang sau 2 giây để hiện lịch mới
+                    setTimeout(() => location.reload(), 2000);
+                } else {
+                    ketQuaDiv.innerHTML = `
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            <h5 class="alert-heading"><i class="bi bi-x-circle me-2"></i>Lỗi!</h5>
+                            <p class="mb-0">${data.message}</p>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('ketQuaSapXep').innerHTML = `
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="bi bi-x-circle me-2"></i>Có lỗi xảy ra: ${error.message}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>`;
+            })
+            .finally(() => {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            });
+        });
+        
+        function xoaLich(id) {
+            if (confirm('Bạn có chắc muốn xóa lịch này?')) {
+                fetch('/SapXepLich/XoaLich/' + id, { method: 'POST' })
+                    .then(() => location.reload());
+            }
+        }
+    </script>
+}

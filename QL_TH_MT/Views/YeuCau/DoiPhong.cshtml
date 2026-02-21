@@ -1,0 +1,164 @@
+@{
+    ViewData["Title"] = "Yêu cầu đổi phòng/ca";
+    var choPhep = ViewBag.ChoPhep as bool? ?? false;
+}
+
+@if (!choPhep)
+{
+    <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        Chức năng đổi phòng/ca chỉ khả dụng từ Tuần 4 tiền học kỳ và trong thời gian học kỳ diễn ra.
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-door-open me-2"></i>Tạo yêu cầu đổi phòng/ca
+            </div>
+            <div class="card-body">
+                @if (choPhep)
+                {
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Quy trình:</strong> Yêu cầu sẽ được gửi đến cả PDT và TT ĐTTH. 
+                        Cần cả 2 bên duyệt thì mới được chấp nhận.
+                    </div>
+                    
+                    <form asp-action="TaoDoiPhong" method="post">
+                        <div class="mb-3">
+                            <label class="form-label">Lịch cần đổi <span class="text-danger">*</span></label>
+                            <select name="LichThucHanhId" class="form-select" required>
+                                <option value="">-- Chọn lịch --</option>
+                                @if (ViewBag.LichCuaToi != null)
+                                {
+                                    foreach (var lich in ViewBag.LichCuaToi as IEnumerable<SelectListItem>)
+                                    {
+                                        <option value="@lich.Value">@lich.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        
+                        <hr/>
+                        <h6 class="text-muted mb-3">Thông tin mới (để trống nếu giữ nguyên)</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Phòng mới</label>
+                            <select name="PhongMoiId" class="form-select">
+                                <option value="">-- Giữ nguyên --</option>
+                                @if (ViewBag.Phongs != null)
+                                {
+                                    foreach (var p in ViewBag.Phongs as IEnumerable<SelectListItem>)
+                                    {
+                                        <option value="@p.Value">@p.Text</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Thứ mới</label>
+                                <select name="ThuMoi" class="form-select">
+                                    <option value="">-- Giữ nguyên --</option>
+                                    <option value="2">Thứ 2</option>
+                                    <option value="3">Thứ 3</option>
+                                    <option value="4">Thứ 4</option>
+                                    <option value="5">Thứ 5</option>
+                                    <option value="6">Thứ 6</option>
+                                    <option value="7">Thứ 7</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Ca mới</label>
+                                <select name="CaMoi" class="form-select">
+                                    <option value="">-- Giữ nguyên --</option>
+                                    <option value="1">Ca 1 (7:00-8:30)</option>
+                                    <option value="2">Ca 2 (8:40-10:10)</option>
+                                    <option value="3">Ca 3 (10:20-11:50)</option>
+                                    <option value="4">Ca 4 (12:30-14:00)</option>
+                                    <option value="5">Ca 5 (14:10-15:40)</option>
+                                    <option value="6">Ca 6 (15:50-17:20)</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label class="form-label">Lý do <span class="text-danger">*</span></label>
+                            <textarea name="LyDo" class="form-control" rows="3" required 
+                                      placeholder="Nhập lý do cần đổi phòng/ca..."></textarea>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-send me-1"></i>Gửi yêu cầu
+                        </button>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        Chức năng không khả dụng trong giai đoạn này.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-ul me-2"></i>Yêu cầu của tôi
+            </div>
+            <div class="card-body p-0">
+                @if (ViewBag.YeuCauCuaToi != null && ((IEnumerable<dynamic>)ViewBag.YeuCauCuaToi).Any())
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var yc in ViewBag.YeuCauCuaToi as IEnumerable<dynamic>)
+                        {
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h6 class="mb-1">@yc.TenLich</h6>
+                                        <p class="mb-1 small">
+                                            @if (!string.IsNullOrEmpty(yc.PhongMoi))
+                                            {
+                                                <span class="badge bg-info me-1">Phòng: @yc.PhongMoi</span>
+                                            }
+                                            @if (yc.ThuMoi != null)
+                                            {
+                                                <span class="badge bg-secondary me-1">Thứ @yc.ThuMoi</span>
+                                            }
+                                            @if (yc.CaMoi != null)
+                                            {
+                                                <span class="badge bg-secondary">Ca @yc.CaMoi</span>
+                                            }
+                                        </p>
+                                        <p class="mb-0 small text-muted">
+                                            PDT: <span class="badge @(yc.PDTDuyet == true ? "bg-success" : yc.PDTDuyet == false ? "bg-danger" : "bg-warning")">
+                                                @(yc.PDTDuyet == true ? "✓" : yc.PDTDuyet == false ? "✗" : "?")
+                                            </span>
+                                            TT ĐTTH: <span class="badge @(yc.TTDTDuyet == true ? "bg-success" : yc.TTDTDuyet == false ? "bg-danger" : "bg-warning")">
+                                                @(yc.TTDTDuyet == true ? "✓" : yc.TTDTDuyet == false ? "✗" : "?")
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <span class="badge @(yc.TrangThai == "ChoDuyet" ? "bg-warning" : yc.TrangThai == "DaDuyet" ? "bg-success" : "bg-danger")">
+                                        @(yc.TrangThai == "ChoDuyet" ? "Chờ duyệt" : yc.TrangThai == "DaDuyet" ? "Đã duyệt" : "Từ chối")
+                                    </span>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted text-center py-4">
+                        Chưa có yêu cầu nào
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,96 @@
+@model IEnumerable<HocKyViewModel>
+@{
+    ViewData["Title"] = "Quản lý học kỳ";
+}
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-calendar-event me-2"></i>Danh sách học kỳ</span>
+        <a href="/QuanLyHocKy/Tao" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i>Thêm học kỳ
+        </a>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tên học kỳ</th>
+                        <th>Năm học</th>
+                        <th>Bắt đầu</th>
+                        <th>Kết thúc</th>
+                        <th>Giai đoạn</th>
+                        <th>Trạng thái</th>
+                        <th width="150">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr class="@(item.DangHoatDong ? "table-primary" : "")">
+                            <td>
+                                <strong>@item.TenHocKy</strong>
+                                @if (item.DangHoatDong)
+                                {
+                                    <span class="badge bg-success ms-1">Hiện tại</span>
+                                }
+                            </td>
+                            <td>@item.NamHoc</td>
+                            <td>@item.NgayBatDau.ToString("dd/MM/yyyy")</td>
+                            <td>@item.NgayKetThuc.ToString("dd/MM/yyyy")</td>
+                            <td>
+                                <span class="badge @GetPhaseBadgeClass(item.GiaiDoanHienTai)">
+                                    @item.GiaiDoanHienTai
+                                </span>
+                            </td>
+                            <td>
+                                @if (item.DangHoatDong)
+                                {
+                                    <span class="badge bg-success"><i class="bi bi-check-circle"></i> Hoạt động</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary">Không hoạt động</span>
+                                }
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="/QuanLyHocKy/ChiTiet/@item.Id" class="btn btn-outline-info" title="Chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="/QuanLyHocKy/Sua/@item.Id" class="btn btn-outline-primary" title="Sửa">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    @if (!item.DangHoatDong)
+                                    {
+                                        <form asp-action="KichHoat" asp-route-id="@item.Id" method="post" style="display:inline">
+                                            <button type="submit" class="btn btn-outline-success" title="Kích hoạt">
+                                                <i class="bi bi-power"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetPhaseBadgeClass(string phase)
+    {
+        return phase switch
+        {
+            var p when p.Contains("Tuần 1") => "bg-primary",
+            var p when p.Contains("Tuần 2") => "bg-info",
+            var p when p.Contains("Tuần 3") => "bg-warning text-dark",
+            var p when p.Contains("Tuần 4") => "bg-success",
+            var p when p.Contains("diễn ra") => "bg-success",
+            var p when p.Contains("thi") => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+}
